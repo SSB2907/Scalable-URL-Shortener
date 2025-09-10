@@ -235,8 +235,4 @@ This project demonstrates API design, caching strategies, database indexing, sca
 
 
 
-This version is **structured, professional, and explanatory**.  
-If you read it once, you’ll be able to **confidently explain the project end-to-end** in an interview.  
 
-👉 Do you want me to also prepare a **short “2-minute oral summary”** version (like an elevator pitch) that you can use directly when asked “Tell me about this project”?
-```

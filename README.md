@@ -1,5 +1,3 @@
----
-
 # Scalable URL Shortener
 
 This is a production-style URL Shortener (like Bitly) built with Node.js, PostgreSQL, and Redis.

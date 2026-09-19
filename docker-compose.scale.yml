@@ -1,0 +1,54 @@
+# docker-compose.scale.yml
+#
+# Overlay for the horizontal-scaling demo (Phase 10). Use together with the
+# base compose file:
+#
+#   docker compose -f docker-compose.yml -f docker-compose.scale.yml up --build
+#
+# Rather than `docker compose up --scale app=2` (which hit inconsistent host
+# port allocation across replicas in local testing - a Docker
+# Desktop/networking quirk, not a design choice), this defines a second,
+# explicit `app2` service from the same image/build as `app`. Both are
+# identical, disposable, share no local state, and only differ in container
+# name - which is itself the point being demonstrated: the API holds no
+# per-instance state, so a second instance is just "run the same image
+# again." nginx round-robins across both by container DNS name.
+#
+# `app` keeps the base file's 3000:3000 host publish (an empty `ports: []`
+# override here did not actually clear an inherited list on the Compose
+# version used to build this - documented rather than silently worked
+# around), so it stays directly reachable on :3000 as well as via nginx.
+# `app2` publishes nothing and is reachable only through nginx on :8080 -
+# which is the realistic topology either way (clients hit the load
+# balancer; verify with `docker compose logs app` vs `app2` that both
+# receive traffic through :8080).
+
+services:
+  app2:
+    build: .
+    command: ["node", "src/server.js"]
+    restart: always
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      BASE_URL: http://localhost:8080
+      DATABASE_URL: postgres://urluser:urlpass@postgres:5432/urldb
+      REDIS_URL: redis://redis:6379
+      LOG_LEVEL: info
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  nginx:
+    image: nginx:1.27-alpine
+    depends_on:
+      - app
+      - app2
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:80"
